@@ -27,6 +27,18 @@ LLM_PROVIDER = "{{ cookiecutter.llm_provider }}"
 AUTH_PROVIDERS = "{{ cookiecutter.auth_providers }}"
 DAISYUI_THEME = "{{ cookiecutter.daisyui_theme }}"
 
+def daisyui_themes_list(chosen):
+    """DaisyUI 5 `themes:` value: chosen theme is default; light and dark stay
+    available, with dark as the prefers-color-scheme theme. No name is listed twice."""
+    if chosen == "dark":
+        return "dark --default --prefersdark, light"
+    if chosen == "light":
+        return "light --default, dark --prefersdark"
+    return f"{chosen} --default, light, dark --prefersdark"
+
+
+DAISYUI_THEMES = daisyui_themes_list(DAISYUI_THEME)
+
 # Placeholder → actual value mapping
 REPLACEMENTS = {
     "__PROJECT_NAME__": PROJECT_NAME,
@@ -35,6 +47,7 @@ REPLACEMENTS = {
     "__DOMAIN_NAME__": DOMAIN_NAME,
     "__PRIMARY_COLOR__": PRIMARY_COLOR,
     "__DAISYUI_THEME__": DAISYUI_THEME,
+    "__DAISYUI_THEMES__": DAISYUI_THEMES,
     "__AUTHOR_NAME__": AUTHOR_NAME,
     "__AUTHOR_EMAIL__": AUTHOR_EMAIL,
 }

@@ -8,7 +8,7 @@
  * Placeholders are substituted by hooks/post_gen_project.py.
  */
 @plugin "daisyui" {
-  themes: __DAISYUI_THEME__ --default, light, dark --prefersdark;
+  themes: __DAISYUI_THEMES__;
 }
 
 @plugin "daisyui/theme" {
