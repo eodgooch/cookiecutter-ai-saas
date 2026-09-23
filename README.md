@@ -87,7 +87,7 @@ Every generated project is a complete distributed system with **97 files** acros
 | **Auth** | NextAuth v5 (Google, Microsoft, Magic Link) |
 | **Database** | Drizzle ORM (PostgreSQL) |
 | **Queue** | BullMQ (Redis-backed job queue) |
-| **Workers** | Python 3.13 (async BullMQ consumer) |
+| **Workers** | Python 3.14 (async BullMQ consumer) |
 | **DB Writer** | Node.js (Redis subscriber → database) |
 | **Payments** | Stripe (subscriptions + one-time) |
 | **Email** | Resend (magic link, transactional) |
@@ -115,7 +115,7 @@ Every generated project is a complete distributed system with **97 files** acros
 | `include_contact_form` | yes | yes, no | Contact form + API route |
 | `auth_providers` | google_microsoft | google_microsoft, google_only, microsoft_only, all | OAuth providers |
 | `llm_provider` | ollama | ollama, openai, anthropic | AI model provider |
-| `python_version` | 3.13 | any version | Python for worker Dockerfile |
+| `python_version` | 3.14 | any version | Python for worker Dockerfile |
 | `node_version` | 20 | any version | Node.js for Dockerfiles |
 | `redis_port` | 6379 | any port | Local Redis port mapping |
 | `postgres_port` | 5432 | any port | Local PostgreSQL port mapping |

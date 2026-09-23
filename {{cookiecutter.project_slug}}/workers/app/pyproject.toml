@@ -6,20 +6,21 @@ authors = []
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">=3.13"
-bullmq = ">=1.0.0"
-httpx = ">=0.28.0"
-redis = ">=6.0.0"
-pydantic = ">=2.7.0"
-python-dotenv = ">=1.0.1"
-langchain-openai = ">=0.3.0"
-langchain-anthropic = ">=0.3.0"
-langgraph = ">=0.2.0"
+python = ">=3.14,<4"
+bullmq = ">=3.2.6,<4"
+httpx = ">=0.28.0,<1"
+redis = ">=6.0.0,<9"
+pydantic = ">=2.7.0,<3"
+python-dotenv = ">=1.0.1,<2"
+langchain-core = ">=1.0.0,<2"
+langchain-openai = ">=1.0.0,<2"
+langchain-anthropic = ">=1.0.0,<2"
+langgraph = ">=1.0.0,<2"
 
 [tool.poetry.group.dev.dependencies]
-pytest = ">=8.0.0"
-pytest-asyncio = ">=0.24.0"
-pytest-timeout = ">=2.2.0"
+pytest = ">=8.0.0,<10"
+pytest-asyncio = ">=1.0.0,<2"
+pytest-timeout = ">=2.2.0,<3"
 
 [tool.pytest.ini_options]
 markers = [

@@ -34,7 +34,7 @@
     "microsoft_only",
     "all"
   ],
-  "python_version": "3.13",
+  "python_version": "3.14",
   "node_version": "20",
   "redis_port": "6379",
   "postgres_port": "5432",
