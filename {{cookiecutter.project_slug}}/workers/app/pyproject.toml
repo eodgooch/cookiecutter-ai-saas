@@ -6,7 +6,7 @@ authors = []
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">={{ cookiecutter.python_version }},<4"
+python = ">=3.14,<4"
 bullmq = ">=3.2.6,<4"
 httpx = ">=0.28.0,<1"
 redis = ">=6.0.0,<8"

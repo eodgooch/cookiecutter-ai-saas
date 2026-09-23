@@ -2,8 +2,9 @@ FROM node:{{ cookiecutter.node_version }}-alpine
 
 WORKDIR /app
 
-COPY workers/db-writer/package.json ./
-RUN npm install --omit=dev
+# Frozen install against the writer's own lockfile.
+COPY workers/db-writer/package.json workers/db-writer/package-lock.json ./
+RUN npm ci --omit=dev
 
 COPY workers/db-writer/worker.mjs ./worker.mjs
 

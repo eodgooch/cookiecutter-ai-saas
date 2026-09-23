@@ -30,9 +30,30 @@ jobs:
       - name: Generate project from default answers
         run: cookiecutter . --no-input -o .generated
 
-      - name: Install dependencies
+      # Lockfiles ship with the template and are copied verbatim, so every generation
+      # gets the same dependency tree. Only the project name inside the npm locks is
+      # substituted; poetry.lock is untouched.
+      - name: Verify lockfiles match the template
+        run: |
+          T='{{cookiecutter.project_slug}}'
+          G=.generated/my-ai-app
+          cmp "$T/workers/app/poetry.lock" "$G/workers/app/poetry.lock"
+          sed 's/__PROJECT_SLUG__/my-ai-app/g' "$T/package-lock.json" | cmp - "$G/package-lock.json"
+          sed 's/__PROJECT_SLUG__/my-ai-app/g' "$T/workers/db-writer/package-lock.json" | cmp - "$G/workers/db-writer/package-lock.json"
+
+      - name: Install dependencies (frozen)
         working-directory: .generated/my-ai-app
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
+
+      - name: Install db-writer dependencies (frozen)
+        working-directory: .generated/my-ai-app/workers/db-writer
+        run: npm ci --omit=dev --no-audit --no-fund
+
+      - name: Check poetry.lock is in sync with pyproject.toml
+        working-directory: .generated/my-ai-app/workers/app
+        run: |
+          python -m pip install "poetry>=2.5,<3"
+          poetry check --lock
 
       - name: Typecheck
         working-directory: .generated/my-ai-app
@@ -45,3 +66,11 @@ jobs:
       - name: Compile-check Python workers
         working-directory: .generated/my-ai-app
         run: python -m compileall -q workers/app
+
+      # Changing python_version invalidates poetry.lock; the hook must drop it
+      # instead of shipping a stale one.
+      - name: Generate with non-default python_version
+        run: |
+          cookiecutter . --no-input -o .generated-alt project_name="Alt App" python_version=3.13
+          test ! -e ".generated-alt/alt-app/workers/app/poetry.lock"
+          grep -q 'python = ">=3.13,<4"' .generated-alt/alt-app/workers/app/pyproject.toml

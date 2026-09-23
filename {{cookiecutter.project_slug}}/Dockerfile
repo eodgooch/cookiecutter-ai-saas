@@ -2,11 +2,9 @@ FROM node:{{ cookiecutter.node_version }}-alpine AS base
 
 FROM base AS builder
 WORKDIR /app
-COPY package.json package-lock.json* ./
-# The template ships no lockfile, so a freshly generated project has none until
-# `npm install` runs. Prefer `npm ci` when a lock exists (reproducible), and fall
-# back to `npm install` when it does not. Commit the lockfile from your project.
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+COPY package.json package-lock.json ./
+# Frozen install: fails if package-lock.json is missing or out of sync with package.json.
+RUN npm ci
 COPY . .
 RUN npm run build
 
@@ -26,8 +24,8 @@ CMD ["node", "server.js"]
 
 FROM base AS ops
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN if [ -f package-lock.json ]; then npm ci --include=dev; else npm install --include=dev; fi
+COPY package.json package-lock.json ./
+RUN npm ci --include=dev
 COPY tsconfig.json ./
 COPY scripts ./scripts
 COPY lib ./lib
@@ -35,7 +33,9 @@ CMD ["node", "-e", "console.log('ops image ready')"]
 
 FROM base AS migrator
 WORKDIR /app
-RUN npm install drizzle-kit@0.30 drizzle-orm@0.38 pg@8
+# Same locked versions as the app (drizzle-kit is a devDependency, hence --include=dev).
+COPY package.json package-lock.json ./
+RUN npm ci --include=dev
 COPY --from=builder /app/drizzle.config.ts ./
 COPY --from=builder /app/lib/db ./lib/db
 COPY scripts/migrate.sh ./scripts/

@@ -1,0 +1,34 @@
+# Dependabot for the template repo itself: keeps the lockfiles that ship inside
+# the cookiecutter directory fresh. The directory name contains braces; Dependabot
+# takes it as a literal path. The generated project ships its own
+# .github/dependabot.yml, which covers the same manifests at their generated paths.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/{{cookiecutter.project_slug}}"
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: "/{{cookiecutter.project_slug}}/workers/db-writer"
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: pip
+    directory: "/{{cookiecutter.project_slug}}/workers/app"
+    schedule:
+      interval: weekly
+    groups:
+      python-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

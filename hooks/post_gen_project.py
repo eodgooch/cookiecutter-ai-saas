@@ -26,6 +26,10 @@ INCLUDE_CONTACT = "{{ cookiecutter.include_contact_form }}"
 LLM_PROVIDER = "{{ cookiecutter.llm_provider }}"
 AUTH_PROVIDERS = "{{ cookiecutter.auth_providers }}"
 DAISYUI_THEME = "{{ cookiecutter.daisyui_theme }}"
+PYTHON_VERSION = "{{ cookiecutter.python_version }}"
+# Python floor that workers/app/pyproject.toml and poetry.lock ship with (the
+# cookiecutter.json default). Keep in sync with both.
+LOCKED_PYTHON_VERSION = "3.14"
 
 def daisyui_themes_list(chosen):
     """DaisyUI 5 `themes:` value: chosen theme is default; light and dark stay
@@ -86,6 +90,27 @@ def process_all_files():
             if ext in EXTENSIONS:
                 filepath = os.path.join(root, filename)
                 replace_placeholders_in_file(filepath)
+
+
+def apply_python_version():
+    """Apply a non-default python_version to the worker's Poetry project.
+
+    poetry.lock is resolved for LOCKED_PYTHON_VERSION and its content-hash covers the
+    `python` constraint, so changing the floor makes the shipped lock stale. In that
+    case drop the lock rather than ship one that fails `poetry install`; the user
+    must run `poetry lock` once (Dockerfile.worker is frozen and will fail until then).
+    """
+    if PYTHON_VERSION == LOCKED_PYTHON_VERSION:
+        return
+    pyproject = "workers/app/pyproject.toml"
+    old = f'python = ">={LOCKED_PYTHON_VERSION},<4"'
+    with open(pyproject, "r", encoding="utf-8") as f:
+        content = f.read()
+    with open(pyproject, "w", encoding="utf-8") as f:
+        f.write(content.replace(old, f'python = ">={PYTHON_VERSION},<4"'))
+    remove_file("workers/app/poetry.lock")
+    print(f"  NOTE: python_version={PYTHON_VERSION} differs from the locked {LOCKED_PYTHON_VERSION};")
+    print("        run `cd workers/app && poetry lock` and commit workers/app/poetry.lock.")
 
 
 def remove_directory(path):
@@ -233,6 +258,7 @@ def main():
     print(f"{'='*60}\n")
 
     process_all_files()
+    apply_python_version()
     handle_stripe()
     handle_blog()
     handle_contact()
@@ -247,7 +273,7 @@ def main():
     print(f"  cp .env.example .env.local          # host: services on localhost")
     print(f"  cp .env.example .env.docker.local   # containers: @postgres:5432, redis://redis:6379")
     print(f"  #   set NEXTAUTH_SECRET in both:  openssl rand -hex 32")
-    print(f"  npm install")
+    print(f"  npm ci")
     print(f"  docker compose up -d")
     print(f"  npm run db:generate                 # no migrations ship with the template")
     print(f"  npm run db:migrate")

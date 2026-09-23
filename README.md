@@ -115,7 +115,7 @@ Every generated project is a complete distributed system with **97 files** acros
 | `include_contact_form` | yes | yes, no | Contact form + API route |
 | `auth_providers` | google_microsoft | google_microsoft, google_only, microsoft_only, all | OAuth providers |
 | `llm_provider` | ollama | ollama, openai, anthropic | AI model provider |
-| `python_version` | 3.14 | any version | Python for worker Dockerfile |
+| `python_version` | 3.14 | any version | Python for worker Dockerfile. `poetry.lock` is resolved for 3.14; any other value drops it and you must run `poetry lock` in `workers/app` once |
 | `node_version` | 20 | any version | Node.js for Dockerfiles |
 | `redis_port` | 6379 | any port | Local Redis port mapping |
 | `postgres_port` | 5432 | any port | Local PostgreSQL port mapping |
@@ -183,10 +183,12 @@ Every generated project is a complete distributed system with **97 files** acros
 │   │   ├── llm_utils.py           #   LLM provider abstraction
 │   │   ├── tools/                 #   Custom pipeline tools
 │   │   ├── tests/                 #   Pytest suite
-│   │   └── pyproject.toml         #   Poetry dependencies
+│   │   ├── pyproject.toml         #   Poetry dependencies
+│   │   └── poetry.lock            #   Locked Python dependency tree
 │   └── db-writer/                 # Node.js result persister
 │       ├── worker.mjs             #   Redis subscriber → DB
-│       └── package.json
+│       ├── package.json
+│       └── package-lock.json
 │
 ├── Dockerfile                     # Multi-stage (builder, runner, ops, migrator)
 ├── docker-compose.yml             # Dev: app + worker + db-writer + postgres + redis
@@ -196,6 +198,8 @@ Every generated project is a complete distributed system with **97 files** acros
 ├── postcss.config.js              # Tailwind 4 PostCSS plugin (theme lives in app/globals.css)
 ├── drizzle.config.ts              # Migration generator config
 ├── package.json                   # Node dependencies
+├── package-lock.json              # Locked Node dependency tree (Dockerfiles use npm ci)
+├── .github/dependabot.yml         # Weekly dependency update PRs
 ├── tsconfig.json                  # Strict TypeScript
 ├── .env.example                   # All env vars documented
 ├── scripts/
@@ -246,7 +250,7 @@ cp .env.example .env.docker.local # docker compose — services on compose servi
 # Then edit both — see "Environment Variables" below
 
 # 3. Install dependencies
-npm install
+npm ci
 
 # 4. Start infrastructure
 docker compose up -d
@@ -262,7 +266,7 @@ npm run dev
 
 # 7. Start the Python worker (separate terminal)
 cd workers/app
-pip install poetry && poetry install
+pip install "poetry>=2.5,<3" && poetry install
 python worker.py
 
 # 8. Start the DB writer (separate terminal)

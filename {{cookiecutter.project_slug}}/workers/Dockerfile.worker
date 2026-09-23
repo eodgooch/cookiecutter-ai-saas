@@ -10,11 +10,10 @@ ENV POETRY_VIRTUALENVS_CREATE=false \
     POETRY_NO_INTERACTION=1 \
     PYTHONUNBUFFERED=1
 
-# poetry.lock is optional — the template ships none, so the first build
-# resolves and writes one. Commit it from your project for reproducibility.
-COPY app/pyproject.toml app/poetry.lock* ./
-RUN pip install --no-cache-dir poetry \
-    && { [ -f poetry.lock ] || poetry lock --no-ansi; } \
+# Frozen install: poetry.lock must exist and match pyproject.toml, otherwise the
+# build fails instead of re-resolving. Regenerate with `poetry lock` after changing deps.
+COPY app/pyproject.toml app/poetry.lock ./
+RUN pip install --no-cache-dir "poetry>=2.5,<3" \
     && poetry install --only main --no-ansi
 
 COPY app .

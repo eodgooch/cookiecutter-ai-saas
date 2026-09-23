@@ -29,7 +29,7 @@
 1. **Install dependencies:**
 
 ```bash
-npm install
+npm ci
 ```
 
 2. **Configure environment:**
@@ -67,10 +67,14 @@ Visit [http://localhost:3000](http://localhost:3000)
 
 ```bash
 cd workers/app
-pip install poetry
-poetry install
+pip install "poetry>=2.5,<3"
+poetry install   # installs exactly what poetry.lock pins
 python worker.py
 ```
+
+### Dependencies and lockfiles
+
+`package-lock.json`, `workers/db-writer/package-lock.json` and `workers/app/poetry.lock` are committed, and the Dockerfiles install from them without re-resolving (`npm ci`, `poetry install`). To change a dependency, edit the manifest, run `npm install` (or `poetry lock` in `workers/app`), and commit the updated lockfile. `.github/dependabot.yml` opens weekly update PRs.
 
 ### Start the DB writer
 

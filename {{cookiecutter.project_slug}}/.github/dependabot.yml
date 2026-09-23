@@ -1,0 +1,48 @@
+# Keeps package-lock.json / poetry.lock (and Docker base images) fresh.
+# Lockfiles are committed on purpose: review and merge Dependabot PRs rather than
+# letting a build resolve new versions on its own.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /workers/db-writer
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: pip
+    directory: /workers/app
+    schedule:
+      interval: weekly
+    groups:
+      python-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /workers
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /workers/db-writer
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
