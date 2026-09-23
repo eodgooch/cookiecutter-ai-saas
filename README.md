@@ -83,7 +83,7 @@ Every generated project is a complete distributed system with **97 files** acros
 | Layer | Technology |
 |-------|-----------|
 | **Frontend** | Next.js 16, React 19, TypeScript (strict) |
-| **Styling** | Tailwind CSS 3, DaisyUI 4 |
+| **Styling** | Tailwind CSS 4, DaisyUI 5 |
 | **Auth** | NextAuth v5 (Google, Microsoft, Magic Link) |
 | **Database** | Drizzle ORM (PostgreSQL) |
 | **Queue** | BullMQ (Redis-backed job queue) |
@@ -193,7 +193,7 @@ Every generated project is a complete distributed system with **97 files** acros
 ├── docker-compose.prod.yml        # Prod: Caddy network
 ├── config.ts                      # Central app config (plans, resend, colors, auth)
 ├── middleware.ts                   # Edge-safe route protection
-├── tailwind.config.js             # DaisyUI theme
+├── postcss.config.js              # Tailwind 4 PostCSS plugin (theme lives in app/globals.css)
 ├── drizzle.config.ts              # Migration generator config
 ├── package.json                   # Node dependencies
 ├── tsconfig.json                  # Strict TypeScript
@@ -419,9 +419,10 @@ The `project-scaffolder` agent can be spawned by Claude for complex scaffolding 
 
 ### Changing the Theme
 
-Edit `tailwind.config.js`:
-- `primary` color in the DaisyUI theme object
-- Switch between `dark`/`light` or create a custom theme
+Edit `app/globals.css` (Tailwind 4 and DaisyUI 5 configure themes in CSS):
+- `--color-primary` in the `@plugin "daisyui/theme"` block
+- The `themes:` list in `@plugin "daisyui"` (default, `light`, and `dark`)
+- `colors.theme` in `config.ts` sets the active `data-theme`
 
 ---
 

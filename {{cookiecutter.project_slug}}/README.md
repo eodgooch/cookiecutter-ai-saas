@@ -6,7 +6,7 @@
 
 - **Framework:** Next.js 16 (App Router), React 19
 - **Language:** TypeScript (strict), Python {{ cookiecutter.python_version }}
-- **Styling:** Tailwind CSS 3 + DaisyUI 4
+- **Styling:** Tailwind CSS 4 + DaisyUI 5
 - **Database:** PostgreSQL 18, Drizzle ORM
 - **Auth:** NextAuth v5 (JWT sessions, OAuth)
 - **Queue:** BullMQ (Redis-backed)

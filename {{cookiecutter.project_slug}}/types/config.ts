@@ -1,4 +1,5 @@
-export type Theme = "light" | "dark" | "";
+// Any DaisyUI theme name (the one chosen as daisyui_theme at generation time).
+export type Theme = string;
 
 export type PlanTier = "free" | "pro" | "enterprise";
 

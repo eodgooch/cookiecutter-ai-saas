@@ -219,7 +219,7 @@ export default async function LandingPage() {
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1]">
             Automate Your Workflow.
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-emerald-400">
               Powered by AI.
             </span>
           </h1>
@@ -345,9 +345,9 @@ export default async function LandingPage() {
                       }`}
                     >
                       {feature.included ? (
-                        <CheckIcon className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        <CheckIcon className="w-4 h-4 text-emerald-500 shrink-0" />
                       ) : (
-                        <span className="w-4 h-4 flex items-center justify-center text-base-content/20 flex-shrink-0">—</span>
+                        <span className="w-4 h-4 flex items-center justify-center text-base-content/20 shrink-0">—</span>
                       )}
                       {feature.name}
                     </li>

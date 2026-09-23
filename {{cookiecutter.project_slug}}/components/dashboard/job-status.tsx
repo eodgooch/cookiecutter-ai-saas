@@ -123,7 +123,7 @@ export function JobStatus({ jobId, initialStatus, onComplete }: JobStatusProps) 
       </div>
       <div className="h-1.5 bg-base-content/10 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-300"
+          className="h-full bg-linear-to-r from-primary to-primary/70 rounded-full transition-all duration-300"
           style={{ width: `${progress.progress}%` }}
         />
       </div>

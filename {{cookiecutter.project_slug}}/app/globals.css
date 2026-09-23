@@ -1,6 +1,54 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/*
+ * DaisyUI themes. __DAISYUI_THEME__ (chosen at generation time) is the default
+ * theme and carries the brand colour; light and dark stay available so
+ * data-theme="light" / "dark" and prefers-color-scheme both work.
+ * Placeholders are substituted by hooks/post_gen_project.py.
+ */
+@plugin "daisyui" {
+  themes: __DAISYUI_THEME__ --default, light, dark --prefersdark;
+}
+
+@plugin "daisyui/theme" {
+  name: "__DAISYUI_THEME__";
+  --color-primary: __PRIMARY_COLOR__;
+  --color-primary-content: #ffffff;
+  --color-secondary: #1f2937;
+  --color-secondary-content: #ffffff;
+}
+
+@theme {
+  --animate-opacity: opacity 0.25s ease-in-out;
+  --animate-appear-from-right: appearFromRight 300ms ease-in-out;
+  --animate-wiggle: wiggle 1.5s ease-in-out infinite;
+  --animate-popup: popup 0.25s ease-in-out;
+  --animate-shimmer: shimmer 3s ease-out infinite alternate;
+
+  @keyframes opacity { 0% { opacity: 0; } 100% { opacity: 1; } }
+  @keyframes appearFromRight {
+    0% { opacity: 0.3; transform: translate(15%, 0px); }
+    100% { opacity: 1; transform: translate(0); }
+  }
+  @keyframes wiggle {
+    0%, 20%, 80%, 100% { transform: rotate(0deg); }
+    30%, 60% { transform: rotate(-2deg); }
+    40%, 70% { transform: rotate(2deg); }
+    45% { transform: rotate(-4deg); }
+    55% { transform: rotate(4deg); }
+  }
+  @keyframes popup {
+    0% { transform: scale(0.8); opacity: 0.8; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes shimmer {
+    0% { background-position: 0 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+}
 
 /* Custom animations */
 @keyframes glow-pulse {

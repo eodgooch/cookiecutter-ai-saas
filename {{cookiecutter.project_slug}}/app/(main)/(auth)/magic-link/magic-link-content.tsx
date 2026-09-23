@@ -8,7 +8,7 @@ export function MagicLinkContent() {
   const email = searchParams.get("email");
 
   return (
-    <div className="card w-full max-w-md border border-base-200 bg-base-100 shadow-sm">
+    <div className="card w-full max-w-md border border-base-200 bg-base-100 shadow-xs">
       <div className="card-body gap-4 text-center">
         <h1 className="text-2xl font-semibold">Check your email</h1>
         <p className="text-sm text-base-content/60">

@@ -59,7 +59,7 @@ export function ContactForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <div className="grid gap-5 md:grid-cols-2">
-        <label className="form-control">
+        <label className="flex flex-col">
           <span className="mb-2 block text-sm font-semibold text-base-content/80">Name</span>
           <input
             value={form.name}
@@ -67,10 +67,10 @@ export function ContactForm() {
             type="text"
             autoComplete="name"
             required
-            className="input input-bordered w-full"
+            className="input w-full"
           />
         </label>
-        <label className="form-control">
+        <label className="flex flex-col">
           <span className="mb-2 block text-sm font-semibold text-base-content/80">Email</span>
           <input
             value={form.email}
@@ -78,42 +78,42 @@ export function ContactForm() {
             type="email"
             autoComplete="email"
             required
-            className="input input-bordered w-full"
+            className="input w-full"
           />
         </label>
       </div>
 
-      <label className="form-control">
+      <label className="flex flex-col">
         <span className="mb-2 block text-sm font-semibold text-base-content/80">Type</span>
         <select
           value={form.type}
           onChange={(e) => update("type", e.target.value)}
-          className="select select-bordered w-full"
+          className="select w-full"
         >
           <option value="feedback">Feedback</option>
           <option value="support">Support issue</option>
         </select>
       </label>
 
-      <label className="form-control">
+      <label className="flex flex-col">
         <span className="mb-2 block text-sm font-semibold text-base-content/80">Subject</span>
         <input
           value={form.subject}
           onChange={(e) => update("subject", e.target.value)}
           type="text"
           required
-          className="input input-bordered w-full"
+          className="input w-full"
         />
       </label>
 
-      <label className="form-control">
+      <label className="flex flex-col">
         <span className="mb-2 block text-sm font-semibold text-base-content/80">Message</span>
         <textarea
           value={form.message}
           onChange={(e) => update("message", e.target.value)}
           required
           rows={6}
-          className="textarea textarea-bordered min-h-40 w-full"
+          className="textarea min-h-40 w-full"
           placeholder="Tell us what's on your mind..."
         />
       </label>

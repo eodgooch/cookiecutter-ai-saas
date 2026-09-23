@@ -141,7 +141,7 @@ export default async function BlogPostPage({ params }: Props) {
             prose-p:text-base-content/70 prose-p:leading-relaxed
             prose-a:text-primary prose-a:no-underline hover:prose-a:underline
             prose-strong:text-base-content prose-strong:font-semibold
-            prose-code:text-primary prose-code:bg-base-200 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
+            prose-code:text-primary prose-code:bg-base-200 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
             prose-pre:bg-base-200 prose-pre:border prose-pre:border-base-content/10 prose-pre:rounded-xl
             prose-blockquote:border-l-primary prose-blockquote:bg-base-200/50 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic
             prose-ul:text-base-content/70 prose-ol:text-base-content/70

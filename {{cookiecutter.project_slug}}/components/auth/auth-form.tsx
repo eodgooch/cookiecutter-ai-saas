@@ -22,7 +22,7 @@ export function AuthForm({
   footer,
 }: AuthFormProps) {
   return (
-    <div className="card w-full max-w-md border border-base-200 bg-base-100 shadow-sm">
+    <div className="card w-full max-w-md border border-base-200 bg-base-100 shadow-xs">
       <div className="card-body gap-6">
         <div className="space-y-2 text-left">
           <h1 className="text-2xl font-semibold">{title}</h1>

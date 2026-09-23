@@ -82,7 +82,7 @@ const config = {
     supportEmail: "support@__DOMAIN_NAME__",
   },
   colors: {
-    theme: "dark",
+    theme: "__DAISYUI_THEME__",
     main: "__PRIMARY_COLOR__",
   },
   auth: {
