@@ -1,0 +1,22 @@
+FROM python:{{ cookiecutter.python_version }}-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates wget \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+ENV POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_NO_INTERACTION=1 \
+    PYTHONUNBUFFERED=1
+
+# poetry.lock is optional — the template ships none, so the first build
+# resolves and writes one. Commit it from your project for reproducibility.
+COPY app/pyproject.toml app/poetry.lock* ./
+RUN pip install --no-cache-dir poetry \
+    && { [ -f poetry.lock ] || poetry lock --no-ansi; } \
+    && poetry install --only main --no-ansi
+
+COPY app .
+
+CMD ["python", "worker.py"]

@@ -1,0 +1,10 @@
+FROM node:{{ cookiecutter.node_version }}-alpine
+
+WORKDIR /app
+
+COPY workers/db-writer/package.json ./
+RUN npm install --omit=dev
+
+COPY workers/db-writer/worker.mjs ./worker.mjs
+
+CMD ["node", "worker.mjs"]

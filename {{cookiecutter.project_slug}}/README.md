@@ -1,0 +1,130 @@
+# {{ cookiecutter.project_name }}
+
+{{ cookiecutter.project_description }}
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router), React 19
+- **Language:** TypeScript (strict), Python {{ cookiecutter.python_version }}
+- **Styling:** Tailwind CSS 3 + DaisyUI 4
+- **Database:** PostgreSQL 18, Drizzle ORM
+- **Auth:** NextAuth v5 (JWT sessions, OAuth)
+- **Queue:** BullMQ (Redis-backed)
+- **Payments:** Stripe (subscriptions)
+- **Email:** Resend
+- **Deployment:** Docker, Caddy reverse proxy
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js {{ cookiecutter.node_version }}+
+- Python {{ cookiecutter.python_version }}+
+- Docker & Docker Compose
+{% if cookiecutter.database == 'postgresql' %}- PostgreSQL 18{% endif %}
+- Redis 7
+
+### Setup
+
+1. **Install dependencies:**
+
+```bash
+npm install
+```
+
+2. **Configure environment:**
+
+```bash
+cp .env.example .env.local
+# Edit .env.local with your credentials
+```
+
+3. **Start services with Docker:**
+
+```bash
+docker compose up -d
+```
+
+4. **Generate and run database migrations:**
+
+No migrations are committed yet — generate them from `lib/db/schema.ts` first,
+then commit `lib/db/migrations/` so deploys can replay them.
+
+```bash
+npm run db:generate
+npm run db:migrate
+```
+
+5. **Start the dev server:**
+
+```bash
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000)
+
+### Start the Python worker
+
+```bash
+cd workers/app
+pip install poetry
+poetry install
+python worker.py
+```
+
+### Start the DB writer
+
+```bash
+npm run worker:db-writer
+```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Next.js dev server |
+| `npm run build` | Production build |
+| `npm run db:generate` | Generate Drizzle migrations |
+| `npm run db:push` | Push schema (dev only) |
+| `npm run db:migrate` | Run pending migrations |
+| `npm run db:studio` | Open Drizzle Studio |
+| `./scripts/deploy.sh full` | Build & deploy all |
+| `./scripts/deploy.sh app` | Deploy app only |
+
+## Deployment
+
+```bash
+./scripts/deploy.sh full
+```
+
+See `scripts/deploy.sh` for available targets: `app`, `worker`, `db-writer`, `migrator`, `ops`.
+
+## Project Structure
+
+```
+app/                    # Next.js App Router pages
+  (main)/               # Main route group
+    (auth)/             # Auth pages (sign-in, sign-up)
+    dashboard/          # Authenticated area
+  actions/              # Server actions
+  api/                  # API routes
+components/             # React components
+config.ts               # Central app config
+lib/
+  auth.ts               # NextAuth config
+  db/schema.ts          # Drizzle schema
+  db/index.ts           # DB connection
+  queue/                # BullMQ queue helpers
+  redis.ts              # ioredis singleton
+  stripe.ts             # Stripe helpers
+workers/
+  app/                  # Python worker
+  db-writer/            # Node.js DB writer
+scripts/
+  deploy.sh             # Deployment script
+  migrate.sh            # Migration runner
+```
+
+## License
+
+Private

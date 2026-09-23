@@ -1,0 +1,225 @@
+import {
+  pgTable,
+  uuid,
+  text,
+  boolean,
+  timestamp,
+  integer,
+  jsonb,
+  pgEnum,
+  uniqueIndex,
+  index,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+
+// ─── Enums ───────────────────────────────────────────────
+
+export const planEnum = pgEnum("plan", ["free", "pro", "enterprise"]);
+
+export const jobStatusEnum = pgEnum("job_status", [
+  "queued",
+  "running",
+  "completed",
+  "failed",
+  "cancelled",
+]);
+
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "active",
+  "canceled",
+  "past_due",
+  "trialing",
+]);
+
+// ─── Tables ──────────────────────────────────────────────
+
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name"),
+  email: text("email").notNull().unique(),
+  emailVerified: timestamp("email_verified", { mode: "date" }),
+  image: text("image"),
+  stripeCustomerId: text("stripe_customer_id"),
+  plan: planEnum("plan").notNull().default("free"),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const accounts = pgTable(
+  "accounts",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type").$type<"oauth" | "oidc" | "email">().notNull(),
+    provider: text("provider").notNull(),
+    providerAccountId: text("provider_account_id").notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
+    scope: text("scope"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
+  },
+  (account) => ({
+    compoundKey: {
+      columns: [account.provider, account.providerAccountId],
+      name: "accounts_provider_provider_account_id_pk",
+    },
+  })
+);
+
+export const sessions = pgTable("sessions", {
+  sessionToken: text("session_token").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expires: timestamp("expires", { mode: "date" }).notNull(),
+});
+
+export const verificationTokens = pgTable(
+  "verification_tokens",
+  {
+    identifier: text("identifier").notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires", { mode: "date" }).notNull(),
+  },
+  (vt) => ({
+    compoundKey: {
+      columns: [vt.identifier, vt.token],
+      name: "verification_tokens_identifier_token_pk",
+    },
+  })
+);
+
+export const jobs = pgTable(
+  "jobs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: jobStatusEnum("status").notNull().default("queued"),
+    type: text("type").notNull(), // e.g. "analysis", "generation", "processing"
+    input: jsonb("input"), // Job input parameters
+    output: jsonb("output"), // Job result data
+    progress: integer("progress").notNull().default(0),
+    startedAt: timestamp("started_at", { mode: "date" }),
+    completedAt: timestamp("completed_at", { mode: "date" }),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index("jobs_user_id_idx").on(table.userId),
+    statusIdx: index("jobs_status_idx").on(table.status),
+  })
+);
+
+export const jobEvents = pgTable(
+  "job_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    jobId: uuid("job_id")
+      .notNull()
+      .references(() => jobs.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: text("status").notNull(),
+    progress: integer("progress"),
+    message: text("message"),
+    payload: jsonb("payload"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => ({
+    jobIdIdx: index("job_events_job_id_idx").on(table.jobId),
+  })
+);
+
+export const subscriptions = pgTable("subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  stripeSubscriptionId: text("stripe_subscription_id").notNull(),
+  stripePriceId: text("stripe_price_id").notNull(),
+  plan: planEnum("plan").notNull(),
+  status: subscriptionStatusEnum("status").notNull(),
+  currentPeriodStart: timestamp("current_period_start", {
+    mode: "date",
+  }).notNull(),
+  currentPeriodEnd: timestamp("current_period_end", {
+    mode: "date",
+  }).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const auditLogs = pgTable("audit_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  action: text("action").notNull(),
+  resourceType: text("resource_type"),
+  resourceId: uuid("resource_id"),
+  metadata: jsonb("metadata"),
+  ipAddress: text("ip_address"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const contactSubmissions = pgTable(
+  "contact_submissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    type: text("type").notNull(),
+    subject: text("subject").notNull(),
+    message: text("message").notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => ({
+    emailIdx: index("contact_submissions_email_idx").on(table.email),
+    typeIdx: index("contact_submissions_type_idx").on(table.type),
+  })
+);
+
+// ─── Relations ───────────────────────────────────────────
+
+export const usersRelations = relations(users, ({ many }) => ({
+  jobs: many(jobs),
+  subscriptions: many(subscriptions),
+  auditLogs: many(auditLogs),
+}));
+
+export const jobsRelations = relations(jobs, ({ one, many }) => ({
+  user: one(users, {
+    fields: [jobs.userId],
+    references: [users.id],
+  }),
+  events: many(jobEvents),
+}));
+
+export const jobEventsRelations = relations(jobEvents, ({ one }) => ({
+  job: one(jobs, {
+    fields: [jobEvents.jobId],
+    references: [jobs.id],
+  }),
+  user: one(users, {
+    fields: [jobEvents.userId],
+    references: [users.id],
+  }),
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [subscriptions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [auditLogs.userId],
+    references: [users.id],
+  }),
+}));

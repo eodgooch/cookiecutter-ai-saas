@@ -1,0 +1,14 @@
+{
+  "name": "__PROJECT_SLUG__-db-writer",
+  "version": "0.1.0",
+  "description": "__PROJECT_DESCRIPTION__ — DB writer worker",
+  "type": "module",
+  "scripts": {
+    "start": "node worker.mjs"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.38.0",
+    "ioredis": "^5.4.0",
+    "pg": "^8.13.0"
+  }
+}

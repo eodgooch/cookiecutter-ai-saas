@@ -1,0 +1,12 @@
+# Local experimentation, not part of the template
+playground/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# macOS
+.DS_Store
+._*

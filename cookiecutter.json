@@ -1,0 +1,57 @@
+{
+  "project_name": "My AI App",
+  "project_slug": "{{ cookiecutter.project_name|lower|replace(' ', '-')|replace('_', '-') }}",
+  "project_description": "A full-stack AI-powered SaaS application",
+  "author_name": "Your Name",
+  "author_email": "you@example.com",
+  "domain_name": "myapp.example.com",
+  "primary_color": "#c2410c",
+  "daisyui_theme": "dark",
+  "database": [
+    "postgresql"
+  ],
+  "database_extensions": [
+    "none",
+    "postgis",
+    "pgvector",
+    "postgis_pgvector"
+  ],
+  "include_stripe": [
+    "yes",
+    "no"
+  ],
+  "include_blog": [
+    "yes",
+    "no"
+  ],
+  "include_contact_form": [
+    "yes",
+    "no"
+  ],
+  "auth_providers": [
+    "google_microsoft",
+    "google_only",
+    "microsoft_only",
+    "all"
+  ],
+  "python_version": "3.13",
+  "node_version": "20",
+  "redis_port": "6379",
+  "postgres_port": "5432",
+  "llm_provider": [
+    "ollama",
+    "openai",
+    "anthropic"
+  ],
+  "_copy_without_render": [
+    "*.ts",
+    "*.tsx",
+    "*.js",
+    "*.mjs",
+    "*.py",
+    "*.json",
+    "*.css",
+    "*.toml",
+    "*.lock"
+  ]
+}

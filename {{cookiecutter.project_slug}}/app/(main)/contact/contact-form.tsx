@@ -1,0 +1,132 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+type ContactType = "support" | "feedback";
+
+export function ContactForm() {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    type: "feedback" as ContactType,
+    subject: "",
+    message: "",
+  });
+
+  const update = (key: keyof typeof form, value: string) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus(null);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to send");
+      }
+
+      setForm({
+        name: "",
+        email: "",
+        type: "feedback",
+        subject: "",
+        message: "",
+      });
+      setStatus({ type: "success", message: "Message sent! We'll get back to you soon." });
+    } catch (err) {
+      setStatus({
+        type: "error",
+        message: err instanceof Error ? err.message : "Failed to send message",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-5">
+      <div className="grid gap-5 md:grid-cols-2">
+        <label className="form-control">
+          <span className="mb-2 block text-sm font-semibold text-base-content/80">Name</span>
+          <input
+            value={form.name}
+            onChange={(e) => update("name", e.target.value)}
+            type="text"
+            autoComplete="name"
+            required
+            className="input input-bordered w-full"
+          />
+        </label>
+        <label className="form-control">
+          <span className="mb-2 block text-sm font-semibold text-base-content/80">Email</span>
+          <input
+            value={form.email}
+            onChange={(e) => update("email", e.target.value)}
+            type="email"
+            autoComplete="email"
+            required
+            className="input input-bordered w-full"
+          />
+        </label>
+      </div>
+
+      <label className="form-control">
+        <span className="mb-2 block text-sm font-semibold text-base-content/80">Type</span>
+        <select
+          value={form.type}
+          onChange={(e) => update("type", e.target.value)}
+          className="select select-bordered w-full"
+        >
+          <option value="feedback">Feedback</option>
+          <option value="support">Support issue</option>
+        </select>
+      </label>
+
+      <label className="form-control">
+        <span className="mb-2 block text-sm font-semibold text-base-content/80">Subject</span>
+        <input
+          value={form.subject}
+          onChange={(e) => update("subject", e.target.value)}
+          type="text"
+          required
+          className="input input-bordered w-full"
+        />
+      </label>
+
+      <label className="form-control">
+        <span className="mb-2 block text-sm font-semibold text-base-content/80">Message</span>
+        <textarea
+          value={form.message}
+          onChange={(e) => update("message", e.target.value)}
+          required
+          rows={6}
+          className="textarea textarea-bordered min-h-40 w-full"
+          placeholder="Tell us what's on your mind..."
+        />
+      </label>
+
+      {status && (
+        <div className={`rounded-md border px-3 py-2 text-sm ${status.type === "success" ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200" : "border-red-400/30 bg-red-500/10 text-red-200"}`}>
+          {status.message}
+        </div>
+      )}
+
+      <button type="submit" className="btn btn-primary btn-wide" disabled={isSubmitting}>
+        {isSubmitting ? <span className="loading loading-spinner loading-sm" /> : "Send message"}
+      </button>
+    </form>
+  );
+}

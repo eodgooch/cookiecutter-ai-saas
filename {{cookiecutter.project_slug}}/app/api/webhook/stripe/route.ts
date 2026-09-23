@@ -1,0 +1,190 @@
+import { NextResponse, NextRequest } from "next/server";
+import { headers } from "next/headers";
+import Stripe from "stripe";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { users, subscriptions } from "@/lib/db/schema";
+import { getStripe, findCheckoutSession } from "@/lib/stripe";
+import config from "@/config";
+
+export async function POST(req: NextRequest) {
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    return NextResponse.json(
+      { error: "Stripe webhooks are not configured" },
+      { status: 501 }
+    );
+  }
+
+  const body = await req.text();
+  const headersList = await headers();
+  const signature = headersList.get("stripe-signature");
+
+  let event: Stripe.Event;
+
+  try {
+    event = getStripe().webhooks.constructEvent(body, signature!, webhookSecret);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error(`Webhook signature verification failed. ${message}`);
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const stripeObject = event.data.object as Stripe.Checkout.Session;
+
+        // Handle one-time purchases
+        if (stripeObject.metadata?.type === "one_time_purchase") {
+          const userId = stripeObject.client_reference_id;
+          if (!userId) break;
+
+          // TODO: Handle one-time purchase fulfillment
+          // Example: grant credits, unlock features, etc.
+          console.log(`[Webhook] One-time purchase by user ${userId}`);
+
+          break;
+        }
+
+        // Handle subscription checkouts
+        const session = await findCheckoutSession(stripeObject.id);
+
+        const customerId = session?.customer as string;
+        const priceId = session?.line_items?.data[0]?.price?.id;
+        const userId = stripeObject.client_reference_id;
+        const plan = config.stripe.plans.find((p) => p.priceId === priceId);
+
+        if (!plan) break;
+
+        const customer = (await getStripe().customers.retrieve(
+          customerId
+        )) as Stripe.Customer;
+
+        let user;
+
+        if (userId) {
+          const result = await db
+            .select()
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1);
+          user = result[0];
+        } else if (customer.email) {
+          const result = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, customer.email))
+            .limit(1);
+          user = result[0];
+
+          if (!user) {
+            const inserted = await db
+              .insert(users)
+              .values({
+                email: customer.email,
+                name: customer.name || null,
+              })
+              .returning();
+            user = inserted[0];
+          }
+        } else {
+          throw new Error("No user found");
+        }
+
+        // Update user plan and Stripe customer ID
+        await db
+          .update(users)
+          .set({
+            plan: plan.tier,
+            stripeCustomerId: customerId,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, user.id));
+
+        // Create subscription record
+        if (stripeObject.subscription) {
+          const sub = await getStripe().subscriptions.retrieve(
+            stripeObject.subscription as string
+          );
+
+          const periodStart = sub.current_period_start
+            ? new Date(sub.current_period_start * 1000)
+            : new Date();
+          const periodEnd = sub.current_period_end
+            ? new Date(sub.current_period_end * 1000)
+            : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+          await db.insert(subscriptions).values({
+            userId: user.id,
+            stripeSubscriptionId: sub.id,
+            stripePriceId: priceId!,
+            plan: plan.tier,
+            status: "active",
+            currentPeriodStart: periodStart,
+            currentPeriodEnd: periodEnd,
+          });
+        }
+
+        break;
+      }
+
+      case "checkout.session.expired": {
+        break;
+      }
+
+      case "customer.subscription.updated": {
+        const sub = event.data.object as Stripe.Subscription;
+        const priceId = sub.items?.data[0]?.price?.id;
+        const plan = config.stripe.plans.find((p) => p.priceId === priceId);
+
+        if (plan) {
+          await db
+            .update(subscriptions)
+            .set({
+              plan: plan.tier,
+              stripePriceId: priceId!,
+              status: sub.status === "active" ? "active" : "past_due",
+              currentPeriodStart: new Date(sub.current_period_start * 1000),
+              currentPeriodEnd: new Date(sub.current_period_end * 1000),
+            })
+            .where(eq(subscriptions.stripeSubscriptionId, sub.id));
+        }
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const sub = event.data.object as Stripe.Subscription;
+
+        await db
+          .update(subscriptions)
+          .set({ status: "canceled" })
+          .where(eq(subscriptions.stripeSubscriptionId, sub.id));
+
+        // Revert user to free plan
+        const subRecord = await db
+          .select()
+          .from(subscriptions)
+          .where(eq(subscriptions.stripeSubscriptionId, sub.id))
+          .limit(1);
+
+        if (subRecord[0]) {
+          await db
+            .update(users)
+            .set({ plan: "free", updatedAt: new Date() })
+            .where(eq(users.id, subRecord[0].userId));
+        }
+
+        break;
+      }
+
+      default:
+        break;
+    }
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Unknown error";
+    console.error("stripe error: ", message);
+  }
+
+  return NextResponse.json({});
+}

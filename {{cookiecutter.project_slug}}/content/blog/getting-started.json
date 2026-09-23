@@ -1,0 +1,9 @@
+{
+  "slug": "getting-started",
+  "title": "Getting Started with __PROJECT_NAME__",
+  "excerpt": "Learn how to set up your first AI-powered job and start getting results in minutes.",
+  "tags": ["tutorial", "getting-started"],
+  "publishedAt": "2025-01-15",
+  "featuredImage": null,
+  "content": "## Welcome to __PROJECT_NAME__\n\nThis guide will walk you through setting up your first AI-powered job.\n\n### Step 1: Create an Account\n\nSign up for a free account to get started. No credit card required.\n\n### Step 2: Submit Your First Job\n\nNavigate to the dashboard and click \"New Job\". Upload your data or configure the job parameters.\n\n### Step 3: Monitor Progress\n\nWatch your job process in real-time with our live status updates. You'll see progress indicators and can track each step.\n\n### Step 4: Review Results\n\nOnce complete, review your AI-generated results. Download reports, view analytics, and take action on the insights.\n\n## What's Next?\n\nExplore our documentation for advanced features like API access, custom models, and batch processing."
+}

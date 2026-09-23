@@ -1,0 +1,246 @@
+#!/usr/bin/env python3
+"""Post-generation hook for cookiecutter template.
+
+Runs after the project is generated to:
+- Replace __PLACEHOLDER__ strings in .ts/.tsx files (which skip Jinja2 rendering)
+- Remove optional features based on cookiecutter choices
+- Adjust database configuration based on selected database
+"""
+
+import os
+import re
+import shutil
+
+# Cookiecutter variables (resolved at generation time)
+PROJECT_NAME = "{{ cookiecutter.project_name }}"
+PROJECT_SLUG = "{{ cookiecutter.project_slug }}"
+PROJECT_DESCRIPTION = "{{ cookiecutter.project_description }}"
+DOMAIN_NAME = "{{ cookiecutter.domain_name }}"
+PRIMARY_COLOR = "{{ cookiecutter.primary_color }}"
+AUTHOR_NAME = "{{ cookiecutter.author_name }}"
+AUTHOR_EMAIL = "{{ cookiecutter.author_email }}"
+DATABASE = "{{ cookiecutter.database }}"
+INCLUDE_STRIPE = "{{ cookiecutter.include_stripe }}"
+INCLUDE_BLOG = "{{ cookiecutter.include_blog }}"
+INCLUDE_CONTACT = "{{ cookiecutter.include_contact_form }}"
+LLM_PROVIDER = "{{ cookiecutter.llm_provider }}"
+AUTH_PROVIDERS = "{{ cookiecutter.auth_providers }}"
+DAISYUI_THEME = "{{ cookiecutter.daisyui_theme }}"
+
+# Placeholder → actual value mapping
+REPLACEMENTS = {
+    "__PROJECT_NAME__": PROJECT_NAME,
+    "__PROJECT_SLUG__": PROJECT_SLUG,
+    "__PROJECT_DESCRIPTION__": PROJECT_DESCRIPTION,
+    "__DOMAIN_NAME__": DOMAIN_NAME,
+    "__PRIMARY_COLOR__": PRIMARY_COLOR,
+    "__DAISYUI_THEME__": DAISYUI_THEME,
+    "__AUTHOR_NAME__": AUTHOR_NAME,
+    "__AUTHOR_EMAIL__": AUTHOR_EMAIL,
+}
+
+# File extensions to process for placeholder replacement
+EXTENSIONS = {".ts", ".tsx", ".mjs", ".js", ".py", ".json", ".css", ".toml"}
+
+
+def replace_placeholders_in_file(filepath):
+    """Replace all __PLACEHOLDER__ strings in a single file."""
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = f.read()
+    except (UnicodeDecodeError, IOError):
+        return
+
+    original = content
+    for placeholder, value in REPLACEMENTS.items():
+        content = content.replace(placeholder, value)
+
+    if content != original:
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"  Updated: {filepath}")
+
+
+def process_all_files():
+    """Walk through all files and replace placeholders in supported extensions."""
+    print("Replacing placeholders in TypeScript/JavaScript files...")
+    for root, _dirs, files in os.walk("."):
+        # Skip node_modules and .next
+        if "node_modules" in root or ".next" in root:
+            continue
+        for filename in files:
+            _, ext = os.path.splitext(filename)
+            if ext in EXTENSIONS:
+                filepath = os.path.join(root, filename)
+                replace_placeholders_in_file(filepath)
+
+
+def remove_directory(path):
+    """Remove a directory if it exists."""
+    if os.path.exists(path):
+        shutil.rmtree(path)
+        print(f"  Removed: {path}")
+
+
+def remove_file(path):
+    """Remove a file if it exists."""
+    if os.path.exists(path):
+        os.remove(path)
+        print(f"  Removed: {path}")
+
+
+def handle_stripe():
+    """Remove Stripe-related files if not included."""
+    if INCLUDE_STRIPE == "no":
+        print("Removing Stripe files...")
+        remove_file("lib/stripe.ts")
+        # lib/plans.ts stays: app/actions/jobs.ts reads plan limits to rate
+        # limit job submission, which has nothing to do with billing.
+        remove_directory("app/api/webhook/stripe")
+        remove_directory("app/(main)/dashboard/settings")
+        remove_file("app/actions/billing.ts")
+
+
+def handle_blog():
+    """Remove blog files if not included."""
+    if INCLUDE_BLOG == "no":
+        print("Removing blog files...")
+        remove_directory("app/(main)/blog")
+        remove_directory("components/blog")
+
+
+def handle_contact():
+    """Remove contact form files if not included."""
+    if INCLUDE_CONTACT == "no":
+        print("Removing contact form files...")
+        remove_directory("app/(main)/contact")
+        remove_directory("app/api/contact")
+        remove_file("app/actions/contact.ts")
+        remove_file("components/ContactForm.tsx")
+
+
+# Which marker names each auth_providers choice keeps.
+AUTH_PROVIDER_MARKERS = {
+    "google_only": {"google"},
+    "microsoft_only": {"microsoft"},
+    "google_microsoft": {"google", "microsoft"},
+    "all": {"google", "microsoft"},
+}
+
+# Files that may carry cc: markers.
+MARKER_EXTENSIONS = {".ts", ".tsx", ".mjs", ".js", ".css", ".py", ".toml"}
+MARKER_FILENAMES = {".env.example"}
+
+
+def marker_decisions():
+    """marker name -> keep it?
+
+    Conditional content lives in the .ts/.tsx/.env files as
+    `cc:begin <name>` .. `cc:end <name>` regions. Those files skip Jinja
+    rendering (see _copy_without_render), so the choice is applied here.
+    """
+    oauth = AUTH_PROVIDER_MARKERS.get(AUTH_PROVIDERS, {"google", "microsoft"})
+    google = "google" in oauth
+    microsoft = "microsoft" in oauth
+    blog = INCLUDE_BLOG == "yes"
+    contact = INCLUDE_CONTACT == "yes"
+    stripe = INCLUDE_STRIPE == "yes"
+    return {
+        "google": google,
+        "google-import": google,
+        "microsoft": microsoft,
+        "microsoft-import": microsoft,
+        "blog": blog,
+        "contact": contact,
+        "no-contact": not contact,
+        "stripe": stripe,
+    }
+
+
+def apply_markers():
+    """Strip cc: marked regions the project did not ask for, tree-wide.
+
+    Every marker comment is removed afterwards, so generated projects carry no
+    scaffolding residue.
+    """
+    decisions = marker_decisions()
+    print("Applying conditional blocks...")
+
+    for root, dirs, files in os.walk("."):
+        dirs[:] = [d for d in dirs if d not in {"node_modules", ".next", ".git"}]
+        for filename in files:
+            _, ext = os.path.splitext(filename)
+            if ext not in MARKER_EXTENSIONS and filename not in MARKER_FILENAMES:
+                continue
+            path = os.path.join(root, filename)
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+            except (UnicodeDecodeError, IOError):
+                continue
+
+            if not any("cc:begin " in l or "cc:end " in l for l in lines):
+                continue
+
+            kept, skip_depth, changed = [], 0, False
+            for line in lines:
+                begin = re.search(r"cc:begin ([A-Za-z0-9_-]+)", line)
+                end = re.search(r"cc:end ([A-Za-z0-9_-]+)", line)
+                if begin:
+                    changed = True
+                    if skip_depth or not decisions.get(begin.group(1), True):
+                        skip_depth += 1
+                    continue
+                if end:
+                    changed = True
+                    if skip_depth:
+                        skip_depth -= 1
+                    continue
+                if not skip_depth:
+                    kept.append(line)
+
+            if changed:
+                with open(path, "w", encoding="utf-8") as f:
+                    f.writelines(kept)
+                print(f"  Resolved markers: {path}")
+
+
+def make_scripts_executable():
+    """Make shell scripts executable."""
+    scripts = ["scripts/deploy.sh", "scripts/migrate.sh"]
+    for script in scripts:
+        if os.path.exists(script):
+            os.chmod(script, 0o755)
+            print(f"  Executable: {script}")
+
+
+def main():
+    print(f"\n{'='*60}")
+    print(f"Setting up {PROJECT_NAME}...")
+    print(f"{'='*60}\n")
+
+    process_all_files()
+    handle_stripe()
+    handle_blog()
+    handle_contact()
+    apply_markers()
+    make_scripts_executable()
+
+    print(f"\n{'='*60}")
+    print(f"{PROJECT_NAME} is ready!")
+    print(f"{'='*60}")
+    print(f"\nNext steps:")
+    print(f"  cd {PROJECT_SLUG}")
+    print(f"  cp .env.example .env.local          # host: services on localhost")
+    print(f"  cp .env.example .env.docker.local   # containers: @postgres:5432, redis://redis:6379")
+    print(f"  #   set NEXTAUTH_SECRET in both:  openssl rand -hex 32")
+    print(f"  npm install")
+    print(f"  docker compose up -d")
+    print(f"  npm run db:generate                 # no migrations ship with the template")
+    print(f"  npm run db:migrate")
+    print(f"  npm run dev")
+    print()
+
+
+if __name__ == "__main__":
+    main()
