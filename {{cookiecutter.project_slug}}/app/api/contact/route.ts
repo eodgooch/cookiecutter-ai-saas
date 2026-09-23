@@ -8,7 +8,7 @@ import { contactSubmissions } from "@/lib/db/schema";
 
 const contactSchema = z.object({
   name: z.string().trim().min(2).max(120),
-  email: z.string().trim().email().max(254),
+  email: z.email().trim().max(254),
   type: z.enum(["support", "feedback"]),
   subject: z.string().trim().min(3).max(160),
   message: z.string().trim().min(20).max(5000),

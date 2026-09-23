@@ -78,6 +78,20 @@ python worker.py
 npm run worker:db-writer
 ```
 
+## Dependency Notes
+
+Two dependencies are deliberately held back:
+
+- **TypeScript is held to the 6.x line (`^6`).** TypeScript 7 is a compiler rewrite that does
+  not yet ship a stable programmatic compiler API, so typescript-eslint and
+  Next's template/type checkers cannot run on it. Move to 7 once those tools
+  support it (expected in the following minor).
+- **ESLint is held to the 9.x line (`^9`).** `eslint-config-next` bundles `eslint-plugin-react`
+  (and friends), which do not support ESLint 10 yet: `npm run lint` crashes with
+  `getFilename is not a function`. Move to 10 once they do.
+
+Drizzle ORM/Kit stay on the stable 0.x line; 1.0 is still a release candidate.
+
 ## Scripts
 
 | Command | Description |

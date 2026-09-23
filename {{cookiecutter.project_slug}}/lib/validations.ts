@@ -1,14 +1,13 @@
 import { z } from "zod";
 
 export const emailSchema = z
-  .string()
   .email("Invalid email address")
   .min(3, "Email is too short")
   .max(320, "Email is too long");
 
 export const jobInputSchema = z.object({
   type: z.string().min(1, "Job type is required"),
-  params: z.record(z.unknown()).optional(),
+  params: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const contactSchema = z.object({

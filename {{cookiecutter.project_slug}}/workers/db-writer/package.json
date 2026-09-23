@@ -7,8 +7,8 @@
     "start": "node worker.mjs"
   },
   "dependencies": {
-    "drizzle-orm": "^0.38.0",
-    "ioredis": "^5.4.0",
+    "drizzle-orm": "^0.45.3",
+    "ioredis": "^6.0.0",
     "pg": "^8.13.0"
   }
 }
