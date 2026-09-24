@@ -52,13 +52,18 @@ export const getSEOTags = ({
   };
 };
 
+// Serialize JSON-LD for an inline <script>. JSON.stringify leaves "<" intact,
+// so a value containing "</script>" would close the tag early; escape it.
+const jsonLd = (data: unknown) =>
+  JSON.stringify(data).replace(/</g, "\\u003c");
+
 export const renderSchemaTags = () => {
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLd({
             "@context": "https://schema.org",
             "@type": "WebApplication",
             name: config.appName,
@@ -73,7 +78,7 @@ export const renderSchemaTags = () => {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLd({
             "@context": "https://schema.org",
             "@type": "Organization",
             name: config.appName,
@@ -106,7 +111,7 @@ export const renderArticleSchema = (post: {
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
+        __html: jsonLd({
           "@context": "https://schema.org",
           "@type": "Article",
           headline: post.title,
@@ -147,7 +152,7 @@ export const renderFAQSchema = (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
+        __html: jsonLd({
           "@context": "https://schema.org",
           "@type": "FAQPage",
           mainEntity: faqs.map((faq) => ({
