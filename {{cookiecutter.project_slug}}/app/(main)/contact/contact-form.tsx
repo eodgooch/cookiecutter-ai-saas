@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-type ContactType = "support" | "feedback";
+import { contactSchema, type ContactInput } from "@/lib/validations";
 
 export function ContactForm() {
   const router = useRouter();
@@ -12,7 +11,7 @@ export function ContactForm() {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    type: "feedback" as ContactType,
+    type: "feedback" as ContactInput["type"],
     subject: "",
     message: "",
   });
@@ -24,13 +23,20 @@ export function ContactForm() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus(null);
+
+    const parsed = contactSchema.safeParse(form);
+    if (!parsed.success) {
+      setStatus({ type: "error", message: parsed.error.issues[0].message });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(parsed.data),
       });
 
       if (!res.ok) {

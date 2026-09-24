@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { Resend } from "resend";
 import { checkRateLimit } from "@/lib/rate-limit";
 import config from "@/config";
 import { db } from "@/lib/db";
 import { contactSubmissions } from "@/lib/db/schema";
-
-const contactSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  email: z.email().trim().max(254),
-  type: z.enum(["support", "feedback"]),
-  subject: z.string().trim().min(3).max(160),
-  message: z.string().trim().min(20).max(5000),
-});
+import { contactSchema } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";

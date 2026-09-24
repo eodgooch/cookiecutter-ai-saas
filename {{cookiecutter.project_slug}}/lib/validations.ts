@@ -10,10 +10,14 @@ export const jobInputSchema = z.object({
   params: z.record(z.string(), z.unknown()).optional(),
 });
 
+export const contactTypes = ["support", "feedback"] as const;
+
 export const contactSchema = z.object({
-  name: z.string().min(1, "Name is required").max(200),
-  email: emailSchema,
-  type: z.string().min(1, "Type is required"),
-  subject: z.string().min(1, "Subject is required").max(500),
-  message: z.string().min(10, "Message must be at least 10 characters").max(5000),
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(120, "Name is too long"),
+  email: z.email("Invalid email address").trim().max(254, "Email is too long"),
+  type: z.enum(contactTypes),
+  subject: z.string().trim().min(3, "Subject must be at least 3 characters").max(160, "Subject is too long"),
+  message: z.string().trim().min(20, "Message must be at least 20 characters").max(5000, "Message is too long"),
 });
+
+export type ContactInput = z.infer<typeof contactSchema>;
